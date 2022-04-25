@@ -76,7 +76,7 @@ class Controller{
         if(room.equals(""))view.setArea("No Room");
         else view.setArea("Room: "+room);
     }
-    
+
 }
 
 class Model{
