@@ -50,7 +50,7 @@ public class Main extends Application {
         timeslot.getItems().addAll(model.getTimeslot());
         timeslot.setPromptText("Timeslot");
         button.setOnAction(e->con.addLecturer(field.getText()));
-        button2.setOnAction(e->con.findRoom(courses.getValue()));
+        button2.setOnAction(e->con.findRoom(courses.getValue(), timeslot.getValue()));
         button3.setOnAction(e->con.findLecturer(courses.getValue()));
         button4.setOnAction(e->con.findCourse(timeslot.getValue()));
         button5.setOnAction(e->con.assignTimeslot(timeslot.getValue(), courses.getValue(), rooms.getValue()));
@@ -63,7 +63,7 @@ public class Main extends Application {
         intro.setFont(Font.font ("Verdana", 12));
         intro2.setText(model.intro2Text());
         intro2.setFont(Font.font ("Verdana", 12));
-        Scene scene = new Scene(root, 550, 600);
+        Scene scene = new Scene(root, 550, 650);
         stage.setTitle("Course Management system");
         stage.setScene(scene);
         stage.show();
@@ -100,8 +100,8 @@ class Controller{
             view.setArea("Lecturer added:  "+s);
         }
     }
-    void findRoom(String c){
-        String room=model.findRoom(c);
+    void findRoom(String course, String timeslot){
+        String room=model.findRoom(course, timeslot);
         if(room.equals(""))view.setArea("No Room");
         else view.setArea("Room: "+room);
     }
@@ -316,10 +316,13 @@ class Model{
             room+"'), (select id from Courses where name = '"+course+"'))");}
 
 
-    String findRoom(String c){
+    String findRoom(String course, String timeslot){
         ArrayList<String> lst= db.query(
-                "select Rooms.name from ((Courses inner join RoomsCourses on Courses.id = RoomsCourses.courseid)" +
-                        " inner join Rooms on Rooms.id = RoomsCourses.roomid) where Courses.name = '"+c+"'", "name");
+                "select Rooms.name from Rooms\n" +
+                        "inner join TimeslotCourses on Rooms.id = TimeslotCourses.roomid\n" +
+                        "inner join Timeslot on TimeslotCourses.timeslotid = Timeslot.id\n" +
+                        "inner join Courses on TimeslotCourses.courseid = Courses.id\n" +
+                        "where Courses.name = '"+course+"' and Timeslot.name = '"+timeslot+"'", "name");
         System.out.println(lst);
         if(lst.size()==0)return "";
         else return lst.get(0);
@@ -364,15 +367,21 @@ class Model{
         return db.query("select fld2 from lst1 order by fld1;","fld2");
     }
     public String introText(){
-        return " To find a room assigned to a course, choose a course and press \"Find room\". " +
+        return " To find a room in which a course is taking place, choose a course and a timeslot" +
+                "\n and press \"Find room\". " +
                 "\n To find a lecturer assigned to the course, choose a course and press \"Find lecturer\"." +
                 "\n To check if a course is assigned to a timeslot, choose a timeslot and press \"Find course\".";
     }
 
     public String intro2Text(){
         return " To add a lecturer to the system, type the lecturer's name and press \"Add lecturer\"." +
-                "\n To add a course to the schedule, choose course, a room and a timeslot" +
-                "\n and press \"Add to schedule\".";
+                "\n To add a course to the system, type the name of the course and press \"Add course\"." +
+                "\n To add a course to the schedule, choose a course, a room and a timeslot" +
+                "\n and press \"Add to schedule\"." +
+                "\n To assign a lecturer to a course, choose a course and a lecturer and press " +
+                "\n \"Assign lecturer\"." +
+                "\n To specify the expected number of students, choose a course, type a" +
+                "\n number of students and press \"Expected number of students\".";
     }
 }
 
